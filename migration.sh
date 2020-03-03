@@ -13,7 +13,7 @@ tmp_dir="/tmp/apic-em_migration_logs/${timestamp}"
 
 function help
 {
-  echo "Usage: migration.sh [-a] [-d] [-h]"
+  echo "Usage: migration.sh [-a] [-d] [-h] [-m]"
   echo ""
   echo "   -a  APIC-EM IP address"
   echo "   -d  DNA-Center IP address"
@@ -120,9 +120,10 @@ do
 area=`echo $line | awk '{print $1}'`
 printf "  ${YELLOW}Site $area will be created \n"
 curl --header "Content-Type:application/json" --header "Accept:application/json" --header "x-auth-token:${DNAC_TOKEN}" -X POST --data '{"type":"area","site":{"area":{"name":"'${area}'","parentName":"Global"}}}' --insecure -s https://${DNAIP}/dna/intent/api/v1/site 2>&1 | jq '.' 
+sleep 5
 printf "  ${YELLOW}Bulding in $area will be created \n"
 curl --header "Content-Type:application/json" --header "Accept:application/json" --header "x-auth-token:${DNAC_TOKEN}" -X POST --data '{"type":"building","site":{"building":{"name":"Building 1","parentName":"Global/'${area}'","latitude":"51.40019226074219","longitude":"7.128604412078857"}}}' --insecure -s https://${DNAIP}/dna/intent/api/v1/site 2>&1 | jq '.' 
-sleep 1
+sleep 5
 done < ${tmp_dir}/temp_apicem_sites
 printf "\n"
 printf "${BLUE}Press ENTER to continue!${NORM}\n"
@@ -174,6 +175,7 @@ else
             managementIpAddress=`cat ${tmp_dir}/temp_${site}_${serialNumber}_device | grep managementIpAddress | awk -F '"' '{print $4}'`    
             printf "${YELLOW}Create devices with serialnumber ${serialNumber} and MGMT IP ${managementIpAddress} on DNAC ${NORM}\n"
             curl --header "Content-Type:application/json" --header "Accept:application/json" --header "x-auth-token:${DNAC_TOKEN}" -X POST --data '{"cliTransport":"ssh","enablePassword":"'${enable_password}'","userName":"'${ssh_username}'","password":"'${ssh_password}'","snmpROCommunity":"'${snmp_ro_community}'","snmpRWCommunity":"'${snmp_rw_community}'","snmpRetry":"2","snmpTimeout":"3","snmpVersion":"v2","type":"NETWORK_DEVICE","serialNumber":"'${serialNumber}'","ipAddress":["'${managementIpAddress}'"]}' --insecure -s https://${DNAIP}/dna/intent/api/v1/network-device 2>&1 | jq '.' 
+            sleep 5
             printf "${YELLOW}Assign device ${serialNumber} to site ${site} ${NORM}\n"
             dna_siteid=`cat ${tmp_dir}/temp_dna_sites | grep "Global/${site}/Building 1" -B 9 | grep "id" | awk -F '"' '{print $4}'`
             echo ${dna_siteid}
